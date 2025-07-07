@@ -19,6 +19,7 @@ jobs:
           if [[ -f pyproject.toml ]]; then
             python -m build
           else
+            pip install wheel
             python setup.py sdist bdist_wheel
           fi
       - name: Upload Artifacts
