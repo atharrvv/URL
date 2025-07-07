@@ -17,10 +17,10 @@ jobs:
     - name: Build artifacts
       run: |
         mkdir -p artifacts
-        cp *.py artifacts/
-        cp *.txt artifacts/
-        cp *.cfg artifacts/
-        cp *.toml artifacts/
+        cp *.py artifacts/ || true
+        cp *.txt artifacts/ || true
+        cp *.cfg artifacts/ || true
+        cp *.toml artifacts/ || true 
         zip -r artifacts.zip artifacts/
     - uses: actions/upload-artifact@v4
       with:
