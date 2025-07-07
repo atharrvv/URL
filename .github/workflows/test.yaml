@@ -1,6 +1,8 @@
-name: Pytest
+name: Python Tests
 
-on: [push, pull_request]
+on:
+  push:
+    branches: [ main ]
 
 jobs:
   test:
@@ -10,14 +12,17 @@ jobs:
     - uses: actions/setup-python@v4
       with:
         python-version: '3.8'
+
     - name: Upgrade pip
       run: python -m pip install --upgrade pip
+
     - name: Install dependencies
       run: |
-        if [[ -f requirements.txt ]]; then
-          pip install -r requirements.txt
-        fi
+        python -m pip install --upgrade pip
+        if [[ -f 'requirements.txt' ]]; then pip install -r requirements.txt; fi
+
     - name: Install pytest
       run: pip install pytest
-    - name: Run tests
-      run: python -m pytest /tests
+
+    - name: Run Tests
+      run: python -m pytest
