@@ -1,23 +1,27 @@
-name: Build Project
+name: Build Package
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
+  pull_request:
+    branches: [main]
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Set up Python 3.9
-        uses: actions/setup-python@v4
+      - uses: actions/setup-python@v4
         with:
-          python-version: '3.9'
-      - name: Install build tools
-        run: pip install build
-      - name: Build project
-        run: python -m build
-      - name: Upload artifacts
+          python-version: '3.7'
+      - name: Build Package
+        run: |
+          if [[ -f pyproject.toml ]]; then
+            python -m build
+          else
+            python setup.py sdist bdist_wheel
+          fi
+      - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: build
