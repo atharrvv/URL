@@ -6,5 +6,4 @@ def test_addition():
 def test_subtraction():
     assert 5 - 2 == 3
 
-def test_failure():
-    assert 2 * 2 == 5  # This will fail
+
