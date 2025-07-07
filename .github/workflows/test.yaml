@@ -1,29 +1,28 @@
-name: Build Python Project
-on: [push]
+name: Python Build
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
-    - name: Setup Python
-      uses: actions/setup-python@v4
+    - uses: actions/setup-python@v4
       with:
         python-version: '3.9'
-    - name: Install Python dependencies
+    - name: Build artifacts
       run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
-    - name: Build project
-      run: |
-        if [[ -f setup.py ]]; then
-          python setup.py sdist bdist_wheel
-        elif [[ -f pyproject.toml ]]; then
-          poetry build
-        else
-          echo "WARNING: No build tool found (setup.py or pyproject.toml), skipping build."
-        fi
-    - name: Archive build artifacts
-      uses: actions/archive-workflow-job@v2
+        mkdir -p artifacts
+        cp *.py artifacts/
+        cp *.txt artifacts/
+        cp *.cfg artifacts/
+        cp *.toml artifacts/
+        zip -r artifacts.zip artifacts/
+    - uses: actions/upload-artifact@v4
       with:
-        path: dist/
+        name: artifact-build
+        path: artifacts.zip
