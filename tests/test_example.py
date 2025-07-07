@@ -1,2 +1,10 @@
-def test_sample():
-    assert 1 + 1 == 2
+# tests/test_math.py
+
+def test_addition():
+    assert 2 + 3 == 5
+
+def test_subtraction():
+    assert 5 - 2 == 3
+
+def test_failure():
+    assert 2 * 2 == 5  # This will fail
