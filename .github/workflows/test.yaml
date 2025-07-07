@@ -1,23 +1,27 @@
-name: Build Package
+name: Python Build
 
 on:
   push:
-    branches: [main]
+    branches: [ main ]
   pull_request:
-    branches: [main]
+    branches: [ main ]
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v4
-        with:
-          python-version: '3.9'
-      - name: Build Package
-        run: pip install build && python -m build
-      - name: Upload Artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: build
-          path: dist/
+    - uses: actions/checkout@v4
+    - name: Set up Python 3.7
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.7'
+    - name: Install build tools
+      run: pip install build wheel
+    - name: Build Project
+      run: |
+        python -m build
+    - name: Upload Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: dist
+        path: dist/
