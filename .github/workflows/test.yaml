@@ -1,20 +1,43 @@
-name: Test
+name: Deploy Pygmy URL Shortener to EC2
 
-on: [push]
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
 
 jobs:
-  test:
+  deploy:
     runs-on: ubuntu-latest
-
+    
     steps:
-    - uses: actions/checkout@v4
-    - name: Set up Python
+    - name: Checkout code
+      uses: actions/checkout@v3
+    
+    - name: Setup Python
       uses: actions/setup-python@v4
       with:
         python-version: '3.9'
+    
     - name: Install dependencies
-      run: pip install -r requirements.txt
-    - name: Install pytest
-      run: pip install pytest
-    - name: Run tests
-      run: python -m pytest
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+    
+    - name: Deploy to EC2
+      uses: appleboy/ssh-action@v0.1.5
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ${{ secrets.EC2_USERNAME }}
+        key: ${{ secrets.EC2_SSH_KEY }}
+        port: 22
+        script: |
+          cd /var/www/pygmy-url
+          git pull origin main
+          source venv/bin/activate
+          pip install -r requirements.txt
+          # Stop existing services
+          sudo systemctl stop pygmy || true
+          # Start the application
+          sudo systemctl start pygmy
+          sudo systemctl enable pygmy
