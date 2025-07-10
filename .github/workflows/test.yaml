@@ -1,43 +1,52 @@
-name: Deploy Pygmy URL Shortener to EC2
-
+name: Build and Deploy Pygmy URL Shortener to EC2
 on:
   push:
     branches: [ main, master ]
-  pull_request:
-    branches: [ main, master ]
 
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
-    
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
-    
-    - name: Setup Python
-      uses: actions/setup-python@v4
+    - uses: actions/checkout@v3
+    - uses: actions/setup-python@v4
       with:
         python-version: '3.9'
-    
-    - name: Install dependencies
+    - name: Build package
       run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
+        python -m pip install --upgrade pip build
+        python -m build
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: build
+        path: dist/
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+    - name: Download build artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: build
+        path: dist/
     
-    - name: Deploy to EC2
+    - name: Copy dist to EC2
+      uses: appleboy/scp-action@v0.1.7
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ${{ secrets.EC2_USERNAME }}
+        key: ${{ secrets.EC2_SSH_KEY }}
+        source: "dist/*"
+        target: "/var/www/pygmy-url/"
+    
+    - name: Install and restart service
       uses: appleboy/ssh-action@v0.1.5
       with:
         host: ${{ secrets.EC2_HOST }}
         username: ${{ secrets.EC2_USERNAME }}
         key: ${{ secrets.EC2_SSH_KEY }}
-        port: 22
         script: |
           cd /var/www/pygmy-url
-          git pull origin main
-          source venv/bin/activate
-          pip install -r requirements.txt
-          # Stop existing services
-          sudo systemctl stop pygmy || true
-          # Start the application
-          sudo systemctl start pygmy
-          sudo systemctl enable pygmy
+          pip install dist/*.whl --force-reinstall
+          sudo systemctl restart pygmy
