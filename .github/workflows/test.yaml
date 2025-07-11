@@ -1,52 +1,32 @@
-name: Build and Deploy Pygmy URL Shortener to EC2
-on:
-  push:
-    branches: [ main, master ]
+name: Deploy
+
+on: [push]
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-python@v4
-      with:
-        python-version: '3.9'
-    - name: Build package
-      run: |
-        python -m pip install --upgrade pip build
-        python -m build
-    - name: Upload build artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: build
-        path: dist/
-
   deploy:
-    needs: build
     runs-on: ubuntu-latest
     steps:
-    - name: Download build artifacts
-      uses: actions/download-artifact@v4
-      with:
-        name: build
-        path: dist/
-    
-    - name: Copy dist to EC2
-      uses: appleboy/scp-action@v0.1.7
-      with:
-        host: ${{ secrets.EC2_HOST }}
-        username: ${{ secrets.EC2_USERNAME }}
-        key: ${{ secrets.EC2_SSH_KEY }}
-        source: "dist/*"
-        target: "/var/www/pygmy-url/"
-    
-    - name: Install and restart service
-      uses: appleboy/ssh-action@v0.1.5
-      with:
-        host: ${{ secrets.EC2_HOST }}
-        username: ${{ secrets.EC2_USERNAME }}
-        key: ${{ secrets.EC2_SSH_KEY }}
-        script: |
-          cd /var/www/pygmy-url
-          pip install dist/*.whl --force-reinstall
-          sudo systemctl restart pygmy
+      - uses: actions/checkout@v4
+      - name: Checkout artifacts
+        uses: actions/checkout@v4
+
+      - name: SSH to EC2
+        uses: appleboy/ssh-action@v1.1.0
+        with:
+          host: ${{ secrets.EC2_HOSTNAME }}
+          user: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_PRIVATE_KEY }}
+
+      - name: Update dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y python3-pip git python-dev
+          pip install --upgrade pip
+          pip install -r requirements.txt
+      - name: Pull latest code
+        run: git pull origin main
+      - name: Restart service
+        run:  service_restart
+      - name: Reload Nginx (Optional)
+        run: |
+          sudo systemctl reload nginx
