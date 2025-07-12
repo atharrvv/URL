@@ -39,13 +39,13 @@ jobs:
         key: ${{ secrets.EC2_SSH_KEY }}
         source: "dist/*"
         target: "/home/ubuntu/"
-    - name: Install and restart service
-      uses: appleboy/ssh-action@v0.1.5
-      with:
-        host: ${{ secrets.EC2_HOST }}
-        username: ${{ secrets.EC2_USERNAME }}
-        key: ${{ secrets.EC2_SSH_KEY }}
-        script: |
-          cd /home/ubuntu/dist
-          pip install dist/*.whl --force-reinstall
-          sudo systemctl restart pygmy
+    # - name: Install and restart service
+    #   uses: appleboy/ssh-action@v0.1.5
+    #   with:
+    #     host: ${{ secrets.EC2_HOST }}
+    #     username: ${{ secrets.EC2_USERNAME }}
+    #     key: ${{ secrets.EC2_SSH_KEY }}
+    #     script: |
+    #       cd /home/ubuntu/dist
+    #       pip install dist/*.whl --force-reinstall
+    #       sudo systemctl restart pygmy
