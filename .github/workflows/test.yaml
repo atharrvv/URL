@@ -6,11 +6,11 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Copy files to EC2
-        uses: appleboy/scp-action@v0.1.7
+      - name: Check EC2 connection
+        uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
-          source: "./dist/*"
-          target: "/home/ubuntu/app/"
+          script: |
+            echo "✅ EC2 connection successful"
