@@ -22,48 +22,32 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         path: dist/*
-        name: artifacts
+        name: dist
+        
   deploy:
-    needs: build # Rely on the build job to prepare artifacts
+    needs: build
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
-    - uses: actions/setup-python@v4
-      with:
-        python-version: 3.9
-        
-    - name: Download Artifacts
-      uses: actions/download-artifact@v4
-      with:
-          name: artifacts
+      - uses: actions/checkout@v4
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: dist
           path: dist
-    - name: SSH Connect to EC2
-      uses: appleboy/ssh-action@v1.1.0
-      with:
-        host: ${{ secrets.EC2_HOST }}
-        username: ${{ secrets.EC2_USERNAME }}
-        key: ${{ secrets.EC2_SSH_KEY }}
-        # Optional: configure other SSH parameters if needed
-    - name: Copy dist to EC2
-      uses: appleboy/scp-action@v0.1.7
-      with:
-        source: dist/
-        target: /home/ubuntu/
-        host: ${{ secrets.EC2_HOST }}
-        username: ${{ secrets.EC2_USERNAME }}
-        key: ${{ secrets.EC2_SSH_KEY }}
-    - name: Extract and Deploy
-      uses: appleboy/ssh-action@v1.1.0
-      with:
-        host: ${{ secrets.EC2_HOST }}
-        username: ${{ secrets.EC2_USERNAME }}
-        key: ${{ secrets.EC2_SSH_KEY }}
-        run: |
-          unzip -o /home/ubuntu/dist/*.zip
-          cd /home/ubuntu/dist/*
-          pip install -r requirements.txt
-          # Resume application-specific deployment steps
-          # (Example for Flask app)
-          # gunicorn your_app:app -b 0.0.0.0:5000
-          # systemctl restart your_app-service
-          # nginx -s reload
+
+      - name: Connect to EC2
+        uses: appleboy/ssh-action@v1.1.0
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+
+      - name: Copy dist files to EC2
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          source: dist/*
+          target: /home/ubuntu/
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          private_key: ${{ secrets.EC2_SSH_KEY }}
