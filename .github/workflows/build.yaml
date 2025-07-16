@@ -29,6 +29,9 @@ jobs:
       with:
         name: artifact
         path: dist/
+    - name: Check dist contents
+      run: |
+        ls -la dist/
 
   deploy:
     needs: [build]
