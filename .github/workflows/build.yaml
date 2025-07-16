@@ -45,7 +45,7 @@ jobs:
       uses: appleboy/ssh-action@v1.1.0
       with:
         host: ${{ secrets.EC2_HOST }}
-        user: ${{ secrets.EC2_USERNAME }}
+        username: ${{ secrets.EC2_USERNAME }}
         key: ${{ secrets.EC2_SSH_KEY }}
 
     - name: Copy dist to EC2
@@ -54,5 +54,5 @@ jobs:
         source: dist/*
         target: /home/ubuntu/
         host: ${{ secrets.EC2_HOST }}
-        user: ${{ secrets.EC2_USERNAME }}
+        username: ${{ secrets.EC2_USERNAME }}
         key: ${{ secrets.EC2_SSH_KEY }}
