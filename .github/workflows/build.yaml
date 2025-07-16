@@ -45,6 +45,7 @@ jobs:
       uses: actions/download-artifact@v4
       with:
         name: artifact
+        path: dist/
 
     - name: Connect to EC2
       uses: appleboy/ssh-action@v1.1.0
