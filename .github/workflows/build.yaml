@@ -43,7 +43,6 @@ jobs:
         python-version: '3.9'
 
     - name: Build package
-      if: contains(matrix.pyproject, 'pyproject.toml')
       run: |
         pip install build 
         python -m build
