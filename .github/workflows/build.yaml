@@ -1,4 +1,4 @@
-name: Python Tests
+name: Build
 
 on:
   push:
@@ -7,31 +7,59 @@ on:
     branches: [ main ]
 
 jobs:
-  test:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v4
-    - uses: actions/setup-python@v4
-      with:
-        python-version: '3.9'
-    - name: Install dependencies
-      run: pip install -r requirements.txt
-    - name: Install pytest
-      run: pip install pytest
-    - name: Run tests
-      run: python -m pytest
   build:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
     - uses: actions/setup-python@v4
       with:
-        python-version: '3.9'
-    - name: Install build tools
-      run: pip install build wheel
-    - name: Build distribution
-      run: python -m build
-    - uses: actions/upload-artifact@v4
+        python-version: 3.9
+    - name: Build and Upload Artifacts
+      run: |
+        python -m build
+        actions/upload-artifact@v4
+        upload-artifact:
+          path: dist/*
+          name: artifacts
+  deploy:
+    needs: build # Rely on the build job to prepare artifacts
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v4
       with:
-        name: dist
-        path: dist/
+        python-version: 3.9
+    - name: Download Artifacts
+      uses: actions/download-artifact@v3
+      with:
+          name: artifacts
+    - name: SSH Connect to EC2
+      uses: appleboy/ssh-action@v1.1.0
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ${{ secrets.EC2_USERNAME }}
+        key: ${{ secrets.EC2_SSH_KEY }}
+        # Optional: configure other SSH parameters if needed
+    - name: Copy dist to EC2
+      uses: appleboy/scp-action@v0.1.7
+      with:
+        src: dist/
+        dest: /home/ubuntu/
+        host: ${{ secrets.EC2_HOST }}
+        username: ${{ secrets.EC2_USERNAME }}
+        key: ${{ secrets.EC2_SSH_KEY }}
+    - name: Extract and Deploy
+      uses: appleboy/ssh-action@v1.1.0
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ${{ secrets.EC2_USERNAME }}
+        key: ${{ secrets.EC2_SSH_KEY }}
+        commands: |
+          unzip -o /home/ubuntu/dist/*.zip
+          cd /home/ubuntu/dist/*
+          pip install -r requirements.txt
+          # Resume application-specific deployment steps
+          # (Example for Flask app)
+          # gunicorn your_app:app -b 0.0.0.0:5000
+          # systemctl restart your_app-service
+          # nginx -s reload
