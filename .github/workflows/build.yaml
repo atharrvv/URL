@@ -45,7 +45,8 @@ jobs:
     - name: Build package
       if: contains(matrix.pyproject, 'pyproject.toml')
       run: |
-        pip install build && python -m build
+        pip install build 
+        python -m build
 
     #   # If only setup.py exists, use this:
     # - name: Build package
