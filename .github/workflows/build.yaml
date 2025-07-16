@@ -32,26 +32,23 @@ jobs:
     - name: Check dist contents
       run: |
         ls -la dist/
-
   deploy:
-    needs: [build]
     runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v4
-    - uses: actions/setup-python@v4
 
     - name: Download artifact
       uses: actions/download-artifact@v4
       with:
         name: artifact
-        path: dist/
+        path: dist
 
     - name: Connect to EC2
       uses: appleboy/ssh-action@v1.1.0
       with:
         host: ${{ secrets.EC2_HOST }}
-        username: ${{ secrets.EC2_USERNAME }}
+        user: ${{ secrets.EC2_USERNAME }}
         key: ${{ secrets.EC2_SSH_KEY }}
 
     - name: Copy dist to EC2
@@ -60,5 +57,5 @@ jobs:
         source: dist/*
         target: /home/ubuntu/
         host: ${{ secrets.EC2_HOST }}
-        username: ${{ secrets.EC2_USERNAME }}
+        user: ${{ secrets.EC2_USERNAME }}
         key: ${{ secrets.EC2_SSH_KEY }}
