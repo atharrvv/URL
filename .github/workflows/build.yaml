@@ -1,13 +1,11 @@
-name: Test Python Project
+name: Build Python Project
 
 on:
   push:
     branches: [ main ]
-  pull_request:
-    branches: [ main ]
 
 jobs:
-  test:
+  build:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
@@ -21,8 +19,16 @@ jobs:
       run: |
         pip install -r requirements.txt
 
-    - name: Install pytest
-      run: pip install pytest
+    - name: Build project
+      run: |
+        if [ -f pyproject.toml ]; then
+          pip install build && python -m build
+        else
+          pip install wheel && python setup.py sdist bdist_wheel
+        fi
 
-    - name: Run tests
-      run: python -m pytest
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: build
+        path: dist/
