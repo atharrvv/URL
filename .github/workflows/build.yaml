@@ -1,80 +1,28 @@
-name: Python
+name: Test Python Project
 
-on: [push, pull_request]
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
 
 jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+    - uses: actions/checkout@v4
 
-      - name: Setup Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.9'
+    - name: Set up Python 3.9
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
 
-      - name: Install Dependencies
-        run: |
-          pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install pytest
-      - name: Run Tests
-        run: python -m pytest
-  build:
-    needs: [test]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
+    - name: Install dependencies
+      run: |
+        pip install -r requirements.txt
 
-      - name: Setup Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.9'
+    - name: Install pytest
+      run: pip install pytest
 
-      - name: Install Dependencies
-        run: |
-          pip install --upgrade pip
-          pip install -r requirements.txt
-
-      - name: Build
-        run: |
-          if [[ -f pyproject.toml ]]; then
-            pip install build && python -m build
-          else
-            pip install wheel && python setup.py sdist bdist_wheel
-          fi
-
-      - name: Upload Artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: dist
-          path: dist/
-
-  deploy:
-    needs: [build]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Download Artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: dist
-          path: dist
-
-
-      - name: Connect to EC2
-        uses: appleboy/ssh-action@v1.1.0
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USERNAME }}
-          key: ${{ secrets.EC2_SSH_KEY }}
-
-      - name: SCP dist directory to EC2
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          source: dist/*
-          target: /home/ubuntu/
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USERNAME }}
-          key: ${{ secrets.EC2_SSH_KEY }}
+    - name: Run tests
+      run: python -m pytest
