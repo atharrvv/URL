@@ -55,7 +55,7 @@ jobs:
       # Upload Coverage Report if coverage is enabled and tests exist
       - name: Upload Coverage Report
         if: steps.tests-check.outputs.exists == 'true'
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: coverage-report
           path: .coverage
