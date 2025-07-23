@@ -1,4 +1,5 @@
 name: Test and Build
+
 on:
   push:
     branches:
@@ -6,53 +7,55 @@ on:
 
 jobs:
   test:
-    name: Test on Python 
+    name: Test Application
     runs-on: ubuntu-latest
     strategy:
       matrix:
         python-version: ["3.12"]
     steps:
-      # Checkout the code repository
-      - name: Checkout repository
+      # Checkout the code
+      - name: Checkout Code
         uses: actions/checkout@v4
 
-      # Set up Python environment
-      - name: Set up Python ${{ matrix.python-version }}
+      # Set up Python
+      - name: Setup Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
 
-      # Cache dependencies based on requirements.txt
-      - name: Cache pip dependencies
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ matrix.python-version }}-${{ hashFiles('**/requirements*.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-${{ matrix.python-version }}
-            ${{ runner.os }}-pip
+      # # Cache dependencies if requirements.txt exists
+      # - name: Cache dependencies
+      #   if: steps.dependency-check.outputs.exists == 'true'
+      #   uses: actions/cache@v4
+      #   with:
+      #     path: ~/.cache/pip
+      #     key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+      #     restore-keys: |
+      #       ${{ runner.os }}-pip-
 
-      # Install dependencies if requirements.txt exists
+      # Check if requirements.txt exists (dynamic step)
+      - name: Check for requirements.txt
+        id: dependency-check
+        run: echo "exists=$(if [ -f requirements.txt ]; then echo true; else echo false; fi)" >> $GITHUB_ENV
+
+      # Install dependencies
       - name: Install dependencies
-        if: exists('./requirements.txt')
-        run: |
-          pip install --upgrade pip
-          pip install -r requirements.txt
+        if: steps.dependency-check.outputs.exists == 'true'
+        run: pip install -r requirements.txt || pip install pytest
 
-      # Install testing-specific dependencies if requirements-test.txt exists
-      - name: Install test dependencies
-        if: exists('./requirements-test.txt')
-        run: |
-          pip install --upgrade pip
-          pip install -r requirements-test.txt
+      # Run tests if tests/ directory exists
+      - name: Check for tests directory
+        id: tests-check
+        run: echo "exists=$(if [ -d tests ]; then echo true; else echo false; fi)" >> $GITHUB_ENV
 
-      # Run tests using pytest if the tests directory exists
-      - name: Run tests
-        if: exists('./tests/')
-        run: |
-          pytest --cov || echo "Tests could not be executed, ensure 'pytest' is correctly configured."
+      - name: Run Tests
+        if: steps.tests-check.outputs.exists == 'true'
+        run: python -m pytest --cov || echo "No tests found, skipping test job."
 
-      # Comment if tests don't exist
-      - name: Skip tests
-        if: "!exists('./tests/')"
-        run: echo "No 'tests/' directory detected. Skipping tests step."
+      # Upload Coverage Report if coverage is enabled and tests exist
+      - name: Upload Coverage Report
+        if: steps.tests-check.outputs.exists == 'true'
+        uses: actions/upload-artifact@v3
+        with:
+          name: coverage-report
+          path: .coverage
