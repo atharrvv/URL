@@ -59,6 +59,6 @@ jobs:
         shell: bash
 
       # Conditional step: Comment if no tests directory exists
-      - name: Skip tests (No tests/ directory found)
-        if: ${{ !files.exists('tests/') }}
-        run: echo "No 'tests/' directory found. Skipping tests."
+      # - name: Skip tests (No tests/ directory found)
+      #   if: ${{ !files.exists('tests/') }}
+      #   run: echo "No 'tests/' directory found. Skipping tests."
