@@ -59,3 +59,47 @@ jobs:
         with:
           name: coverage-report
           path: .coverage
+
+  build:
+    name: Build Application
+    needs: test
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checkout the code
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      # Set up Python
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      # # Cache dependencies if requirements.txt exists
+      # - name: Cache dependencies
+      #   if: steps.dependency-check.outputs.exists == 'true'
+      #   uses: actions/cache@v4
+      #   with:
+      #     path: ~/.cache/pip
+      #     key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+      #     restore-keys: |
+      #       ${{ runner.os }}-pip-
+
+      # Check for build config (setup.py)
+      - name: Check for build config
+        id: build-check
+        run: echo "exists=$(if [ -f setup.py ]; then echo true; else echo false; fi)" >> $GITHUB_ENV
+
+      # Build package if setup.py exists
+      - name: Build Package
+        if: steps.build-check.outputs.exists == 'true'
+        run: python -m build || echo "Build config not found, skipping build step."
+
+      # Upload build artifacts
+      - name: Upload Build Artifacts
+        if: steps.build-check.outputs.exists == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist-artifacts
+          path: dist/
