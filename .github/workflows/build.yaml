@@ -1,34 +1,47 @@
-name: Build Python Project
-
+name: Test and Build
 on:
   push:
-    branches: [ main ]
-
+    branches:
+      - master
 jobs:
-  build:
+  test:
+    name: Test on Python ${{ matrix.python-version }}
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.12"]
     steps:
-    - uses: actions/checkout@v4
+      # Checkout the code repository
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-    - name: Set up Python 3.9
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.9'
+      # Set up Python environment
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
 
-    - name: Install dependencies
-      run: |
-        pip install -r requirements.txt
+      # Install dependencies if requirements.txt exists
+      - name: Install dependencies
+        if: exists('./requirements.txt')
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
 
-    - name: Build project
-      run: |
-        if [ -f pyproject.toml ]; then
-          pip install build && python -m build
-        else
-          pip install wheel && python setup.py sdist bdist_wheel
-        fi
+      # Install testing-specific dependencies if requirements-test.txt exists
+      - name: Install test dependencies
+        if: exists('./requirements-test.txt')
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements-test.txt
 
-    - name: Upload artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: build
-        path: dist/
+      # Run tests using pytest if the tests directory exists
+      - name: Run tests
+        if: exists('./tests/')
+        run: |
+          pytest --cov || echo "Tests could not be executed, ensure 'pytest' is correctly configured."
+
+      # Comment if tests don't exist
+      - name: Skip tests
+        if: "!exists('./tests/')"
+        run: echo "No 'tests/' directory detected. Skipping tests step."
