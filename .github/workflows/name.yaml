@@ -31,16 +31,16 @@ jobs:
       #     restore-keys: |
       #       ${{ runner.os }}-python-${{ matrix.python-version }}-
 
-      - name: Install dependencies
-        run: |
-            pip install -r requirements.txt
-          # # Detect and install dependencies based on file presence
-          # if [ -f "requirements.txt" ]; then
-          #   echo "Installing dependencies from requirements.txt"
-          #   pip install -r requirements.txt
-          # else
-          #   echo "No dependency file found. Skipping dependency installation."
-          # fi
+      # - name: Install dependencies
+      #   run: |
+      #       pip install -r requirements.txt
+      #     # # Detect and install dependencies based on file presence
+      #     # if [ -f "requirements.txt" ]; then
+      #     #   echo "Installing dependencies from requirements.txt"
+      #     #   pip install -r requirements.txt
+      #     # else
+      #     #   echo "No dependency file found. Skipping dependency installation."
+      #     # fi
 
       - name: Run tests
         run: |
