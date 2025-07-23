@@ -51,7 +51,6 @@ jobs:
 
       # Step: Run tests
       - name: Run tests
-        if: ${{ files.exists('tests/') }}
         run: |
           if [ -f "pytest.ini" ] || [ -f "pyproject.toml" ] || [ -f "setup.cfg" ]; then
             python -m pytest --cov || python -m pytest
