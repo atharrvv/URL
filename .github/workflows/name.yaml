@@ -1,105 +1,59 @@
 name: Test and Build
-
 on:
   push:
     branches:
       - main
+  pull_request:
 
 jobs:
   test:
-    name: Test Application
+    name: Test Python Package
     runs-on: ubuntu-latest
     strategy:
       matrix:
         python-version: ["3.12"]
     steps:
-      # Checkout the code
-      - name: Checkout Code
+      - name: Check out repository
         uses: actions/checkout@v4
 
-      # Set up Python
-      - name: Setup Python ${{ matrix.python-version }}
+      - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
 
-      # # Cache dependencies if requirements.txt exists
       # - name: Cache dependencies
-      #   if: steps.dependency-check.outputs.exists == 'true'
+      #   id: cache
       #   uses: actions/cache@v4
       #   with:
+      #     # Use the most common Python dependency file as cache key
       #     path: ~/.cache/pip
-      #     key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+      #     key: ${{ runner.os }}-python-${{ matrix.python-version }}-requirements-${{ hashFiles('**/requirements*.txt') }}
       #     restore-keys: |
-      #       ${{ runner.os }}-pip-
+      #       ${{ runner.os }}-python-${{ matrix.python-version }}-
 
-      # Check if requirements.txt exists (dynamic step)
-      - name: Check for requirements.txt
-        id: dependency-check
-        run: echo "exists=$(if [ -f requirements.txt ]; then echo true; else echo false; fi)" >> $GITHUB_ENV
-
-      # Install dependencies
       - name: Install dependencies
-        if: steps.dependency-check.outputs.exists == 'true'
-        run: pip install -r requirements.txt || pip install pytest
+        run: |
+          # Detect and install dependencies based on file presence
+          if [ -f "requirements.txt" ]; then
+            echo "Installing dependencies from requirements.txt"
+            pip install -r requirements.txt
+          elif [ -f "Pipfile" ]; then
+            echo "Installing dependencies using Pipfile"
+            pip install pipenv
+            pipenv install
+          elif [ -f "pyproject.toml" ]; then
+            echo "Installing dependencies from pyproject.toml (assuming Poetry)"
+            pip install poetry
+            poetry install
+          else
+            echo "No dependency file found. Skipping dependency installation."
+          fi
 
-      # Run tests if tests/ directory exists
-      - name: Check for tests directory
-        id: tests-check
-        run: echo "exists=$(if [ -d tests ]; then echo true; else echo false; fi)" >> $GITHUB_ENV
-
-      - name: Run Tests
-        if: steps.tests-check.outputs.exists == 'true'
-        run: python -m pytest --cov || echo "No tests found, skipping test job."
-
-      # Upload Coverage Report if coverage is enabled and tests exist
-      - name: Upload Coverage Report
-        if: steps.tests-check.outputs.exists == 'true'
-        uses: actions/upload-artifact@v4
-        with:
-          name: coverage-report
-          path: .coverage
-
-  build:
-    name: Build Application
-    needs: test
-    runs-on: ubuntu-latest
-
-    steps:
-      # Checkout the code
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      # Set up Python
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-
-      # # Cache dependencies if requirements.txt exists
-      # - name: Cache dependencies
-      #   if: steps.dependency-check.outputs.exists == 'true'
-      #   uses: actions/cache@v4
-      #   with:
-      #     path: ~/.cache/pip
-      #     key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
-      #     restore-keys: |
-      #       ${{ runner.os }}-pip-
-
-      # Check for build config (setup.py)
-      - name: Check for build config
-        id: build-check
-        run: echo "exists=$(if [ -f setup.py ]; then echo true; else echo false; fi)" >> $GITHUB_ENV
-
-      # Build package if setup.py exists
-      - name: Build Package
-        if: steps.build-check.outputs.exists == 'true'
-        run: python -m build || echo "Build config not found, skipping build step."
-
-      # Upload build artifacts
-      - name: Upload Build Artifacts
-        if: steps.build-check.outputs.exists == 'true'
-        uses: actions/upload-artifact@v4
-        with:
-          name: dist-artifacts
-          path: dist/
+      - name: Run tests
+        run: |
+          if [ -d "tests" ]; then
+            echo "Running tests using pytest"
+            python -m pytest --cov || python -m pytest
+          else
+            echo "No tests directory found. Skipping tests."
+          fi
