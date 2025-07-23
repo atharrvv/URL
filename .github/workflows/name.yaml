@@ -37,14 +37,6 @@ jobs:
           if [ -f "requirements.txt" ]; then
             echo "Installing dependencies from requirements.txt"
             pip install -r requirements.txt
-          elif [ -f "Pipfile" ]; then
-            echo "Installing dependencies using Pipfile"
-            pip install pipenv
-            pipenv install
-          elif [ -f "pyproject.toml" ]; then
-            echo "Installing dependencies from pyproject.toml (assuming Poetry)"
-            pip install poetry
-            poetry install
           else
             echo "No dependency file found. Skipping dependency installation."
           fi
