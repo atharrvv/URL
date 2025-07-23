@@ -3,50 +3,63 @@ on:
   push:
     branches:
       - main
-  pull_request:
 
 jobs:
   test:
-    name: Test Python Package
+    name: Test on Python ${{ matrix.python-version }}
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.12"]
+        python-version: ['3.8', '3.9', '3.10', '3.11', '3.12']
     steps:
-      - name: Check out repository
+      # Step: Checkout repository
+      - name: Checkout code
         uses: actions/checkout@v4
 
+      # Step: Set up Python
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
 
-      # - name: Cache dependencies
-      #   id: cache
+      # # Step: Cache Python packages
+      # - name: Cache Python dependencies
       #   uses: actions/cache@v4
       #   with:
-      #     # Use the most common Python dependency file as cache key
       #     path: ~/.cache/pip
-      #     key: ${{ runner.os }}-python-${{ matrix.python-version }}-requirements-${{ hashFiles('**/requirements*.txt') }}
+      #     key: ${{ runner.os }}-pip-${{ matrix.python-version }}-${{ hashFiles('**/requirements*.txt') }}
       #     restore-keys: |
-      #       ${{ runner.os }}-python-${{ matrix.python-version }}-
+      #       ${{ runner.os }}-pip-${{ matrix.python-version }}
 
-      # - name: Install dependencies
-      #   run: |
-      #       pip install -r requirements.txt
-      #     # # Detect and install dependencies based on file presence
-      #     # if [ -f "requirements.txt" ]; then
-      #     #   echo "Installing dependencies from requirements.txt"
-      #     #   pip install -r requirements.txt
-      #     # else
-      #     #   echo "No dependency file found. Skipping dependency installation."
-      #     # fi
-
-      - name: Run tests
+      # Step: Install dependencies
+      - name: Install dependencies
         run: |
-          if [ -d "tests" ]; then
-            echo "Running tests using pytest" && pip install pytest
+          if [ -f "requirements.txt" ]; then
+            pip install -r requirements.txt
+          elif [ -f "requirements-test.txt" ]; then
+            pip install -r requirements-test.txt
+          elif [ -f "pyproject.toml" ]; then
+            pip install poetry
+            poetry install --no-root
+          elif [ -f "Pipfile" ]; then
+            pip install pipenv
+            pipenv install --dev
+          else
+            echo "No dependency file found. Skipping dependency installation."
+            exit 0
+          fi
+
+      # Step: Run tests
+      - name: Run tests
+        if: ${{ files.exists('tests/') }}
+        run: |
+          if [ -f "pytest.ini" ] || [ -f "pyproject.toml" ] || [ -f "setup.cfg" ]; then
             python -m pytest --cov || python -m pytest
           else
-            echo "No tests directory found. Skipping tests."
-          fi
+            python -m pytest
+        shell: bash
+
+      # Conditional step: Comment if no tests directory exists
+      - name: Skip tests (No tests/ directory found)
+        if: ${{ !files.exists('tests/') }}
+        run: echo "No 'tests/' directory found. Skipping tests."
