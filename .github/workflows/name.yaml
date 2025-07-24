@@ -1,46 +1,23 @@
-name: Test and Build Workflow
-
-on:
-  push:
-    branches:
-      - main
+name: Test and Build
+on: [push, pull_request]
 
 jobs:
   test:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.12"]
+        python-version: [3.8, 3.9, 3.10, 3.11, 3.12]
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
-
-      - name: Verify tests directory existence
-        if: hashFiles('tests/**') != ''
+      - name: Check and run tests
         run: |
-          echo "Tests directory found. Proceeding with test execution."
-
-      - name: Handle missing tests directory
-        if: hashFiles('tests/**') == ''
-        run: |
-          echo "No tests directory found. Skipping tests execution gracefully."
-          exit 0
-
-      - name: Install dependencies
-        if: hashFiles('tests/**') != ''
-        run: |
-          set -e
-          echo "Installing dependencies..."
-          echo "No dependency files detected, skipping installation." # Placeholder for future enhancements
-
-      - name: Run tests
-        if: hashFiles('tests/**') != ''
-        run: |
-          set -e
-          echo "Running tests..."
-          echo "No test framework detected. Ensure files exist before running tests." # Placeholder for execution logic
+          if [ -d "tests" ]; then
+            echo "Tests directory found, running tests..."
+            pip install pytest
+            python -m pytest tests/
+          else
+            echo "No tests directory found, skipping tests"
+          fi
