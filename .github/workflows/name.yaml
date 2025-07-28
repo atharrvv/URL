@@ -2,24 +2,26 @@ name: Test and Build
 on: [push, pull_request]
 
 jobs:
-  test:
+  build:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: ["3.9"]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v4
         with:
-          python-version: ${{ matrix.python-version }}
-      - name: Install dependencies
-        run: pip install -r requirements.txt
-      - name: Check for tests and run
+          python-version: 3.11
+      - name: Check for build configuration and build
         run: |
-          if [ -d "tests" ]; then
-            echo "Tests directory exists. Running tests..."
-            pip install pytest  # Use pytest for testing
-            python -m pytest tests/
+          if [ -f "pyproject.toml" ] || [ -f "setup.py" ]; then
+            echo "Build configuration found. Executing build..."
+            pip install build
+            python -m build
+            [ -d "dist" ] && echo "Build directory created. Build successful."
           else
-            echo "No tests directory found. Skipping tests."
+            echo "No build configuration file found. Skipping build."
           fi
+      - name: Upload artifacts
+        if: hashFiles('dist/**') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifacts
+          path: dist/
