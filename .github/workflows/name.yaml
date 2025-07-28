@@ -14,6 +14,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Check for tests and run
         run: |
+          pip install -r requirements.txt
           if [ -d "tests" ]; then
             echo "Tests directory exists. Running tests..."
             pip install pytest  # Use pytest for testing
