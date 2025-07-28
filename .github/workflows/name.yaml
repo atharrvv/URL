@@ -12,9 +12,10 @@ jobs:
       - uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
+      - name: Install dependencies
+        run: pip install -r requirements.txt
       - name: Check for tests and run
         run: |
-          pip install pytest requests
           if [ -d "tests" ]; then
             echo "Tests directory exists. Running tests..."
             pip install pytest  # Use pytest for testing
