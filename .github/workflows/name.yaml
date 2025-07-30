@@ -8,7 +8,6 @@ on:
 
 jobs:
   test:
-    if: ${{ steps.test_conditions.outputs.should_run_tests }}
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
