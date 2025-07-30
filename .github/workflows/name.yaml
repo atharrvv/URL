@@ -1,26 +1,40 @@
-name: Test and Build
-on: [push, pull_request]
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
 
 jobs:
-  build:
+  test:
+    if: ${{ steps.test_conditions.outputs.should_run_tests }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v4
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
         with:
-          python-version: 3.11
-      - name: Check for build configuration and build
+          python-version: '3.8'
+
+      - name: Install dependencies for testing
         run: |
-          if [ -f "pyproject.toml" ] || [ -f "setup.py" ]; then
-            echo "Build configuration found. Executing build..."
-            pip install build
-            python -m build
-            [ -d "dist" ] && echo "Build directory created. Build successful."
+          [ -f "requirements.txt" ] && pip install -r requirements.txt
+
+      - name: Run Tests Without Framework
+        run: |
+          if [ -d "tests" ]; then
+            echo "Running Tests..."
+            python -m unittest discover -s tests
           else
-            echo "No build configuration file found. Skipping build."
-          fi
-      - name: Upload artifacts
+            echo "No test folder found"
+            exit 0;
+
+      - name: Upload Test Results
+        if: ${{ always() }}
         uses: actions/upload-artifact@v4
         with:
-          name: build-artifacts
-          path: dist/
+          name: test-results
+          path: tests/
